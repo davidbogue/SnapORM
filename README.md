@@ -11,7 +11,7 @@ To add SnapORM as a dependency to your project:
     <version>1.0-SNAPSHOT</version>
 </dependency>
 ```
-When you create a new data access object it should extend BaseDAO<entity> where entity is the object you want to bind to map in the resultset.  
+When you create a new data access object it should extend ```BaseDAO<entity>``` where entity is the object you want to bind to map in the resultset.  
 You must also override an instantiateEntity method which creates a new entity.
 
 For example:
@@ -26,7 +26,7 @@ public class StockSymbolDAO extends BaseDAO<StockSymbol>{
 }
 ```
 
-In you entity you can annotate the class with the @TableName annotation.  This will allow BaseDAO to generate the SQL for basic CRUD operations.
+You can annotate the class with the @TableName annotation.  This will allow BaseDAO to generate the SQL for basic CRUD operations.
 
 For the resultset mapping to work you must annotation the fields with the @ColumnName annotation.
 
@@ -78,3 +78,4 @@ public int insertEntity(T entity)
 
 //deletes entity
 public int deleteByPrimaryKey(T entity)
+```
