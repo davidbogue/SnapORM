@@ -44,6 +44,32 @@ public class PreparedStatementGenerator {
         return getStatement(con, sqlBuilder.toString(), params);
     }
 
+    public PreparedStatement getUpdateStatement(Connection con, Object entity) throws SQLException {
+        AbstractMap.SimpleEntry primaryKeyAndValueMap = getPrimaryKeyNameAndValue(entity);
+        if (primaryKeyAndValueMap == null) {
+            throw new SQLException("Primary Key cannot be empty");
+        }
+        List params = new ArrayList();
+        StringBuilder sqlBuilder = new StringBuilder("UPDATE ").append(getTableName(entity)).append(" SET ");
+        final Field[] fields = entity.getClass().getDeclaredFields();
+        for (final Field field : fields) {
+            final ColumnName columnName = field.getAnnotation(ColumnName.class);
+            Object fieldValue = getFieldValue(field, entity);
+            if (columnName != null && fieldValue != null) {
+                String column = columnName.value();
+                if (columnName != primaryKeyAndValueMap.getKey()) {
+                    sqlBuilder.append(column).append("=?,");
+                    params.add(fieldValue);
+                }
+            }
+        }
+        sqlBuilder.deleteCharAt(sqlBuilder.lastIndexOf(",")).append(" ");
+        sqlBuilder.append("WHERE ?=?");
+        params.add(primaryKeyAndValueMap.getKey());
+        params.add(primaryKeyAndValueMap.getValue());
+        return getStatement(con, sqlBuilder.toString(), params);
+    }
+
     public PreparedStatement getDeleteStatement(Connection con, Object entity) throws SQLException {
         AbstractMap.SimpleEntry keyValue = getPrimaryKeyNameAndValue(entity);
         if (keyValue == null) {
@@ -56,7 +82,7 @@ public class PreparedStatementGenerator {
         return stmt;
     }
 
-    public PreparedStatement getFindByIdStatement(Connection con, Object entity, int pk) throws SQLException {
+    public PreparedStatement getFindByIdStatement(Connection con, Object entity, Object pk) throws SQLException {
         String pkColumn = getPrimaryKeyColumnName(entity);
         if (pkColumn == null) {
             throw new SQLException("Primary Key not defined on entity");
@@ -67,6 +93,18 @@ public class PreparedStatementGenerator {
         return stmt;
     }
 
+    public PreparedStatement getExistsStatement(Connection con, Object entity) throws SQLException {
+        AbstractMap.SimpleEntry keyValue = getPrimaryKeyNameAndValue(entity);
+        if (keyValue == null) {
+            throw new SQLException("Primary Key cannot be empty");
+        }
+        String existsSQL = "SELECT COUNT(1) AS TOTAL FROM %s WHERE %s=?";
+        String sql = String.format(existsSQL, getTableName(entity), keyValue.getKey());
+        PreparedStatement stmt = con.prepareStatement(sql);
+        stmt.setObject(1, keyValue.getValue());
+        return stmt;
+    }
+    
     private String getTableName(Object entity) {
         String tableName = "";
         TableName tableNameAnnotation = entity.getClass().getAnnotation(TableName.class);
@@ -78,13 +116,13 @@ public class PreparedStatementGenerator {
         return tableName;
     }
 
-    private String getPrimaryKeyColumnName(Object entity){
+    private String getPrimaryKeyColumnName(Object entity) {
         String pkField = getPrimaryKeyFieldName(entity);
         if (pkField != null) {
             try {
                 Field idField = entity.getClass().getField(pkField);
                 ColumnName columnName = idField.getAnnotation(ColumnName.class);
-                if (columnName != null ) {
+                if (columnName != null) {
                     return columnName.value();
                 }
             } catch (NoSuchFieldException | SecurityException ex) {
@@ -93,8 +131,8 @@ public class PreparedStatementGenerator {
         }
         return null;
     }
-    
-    private AbstractMap.SimpleEntry getPrimaryKeyNameAndValue(Object entity) {
+
+    public AbstractMap.SimpleEntry getPrimaryKeyNameAndValue(Object entity) {
         String pkField = getPrimaryKeyFieldName(entity);
         if (pkField != null) {
             try {
