@@ -64,8 +64,7 @@ public class PreparedStatementGenerator {
             }
         }
         sqlBuilder.deleteCharAt(sqlBuilder.lastIndexOf(",")).append(" ");
-        sqlBuilder.append("WHERE ?=?");
-        params.add(primaryKeyAndValueMap.getKey());
+        sqlBuilder.append("WHERE ").append(primaryKeyAndValueMap.getKey()).append("=?");
         params.add(primaryKeyAndValueMap.getValue());
         return getStatement(con, sqlBuilder.toString(), params);
     }
