@@ -4,9 +4,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class BaseDAO<T> {
 
@@ -82,7 +85,13 @@ public abstract class BaseDAO<T> {
         if( exists(entity) ){
             return updateEntity(entity);
         } else {
-            return insertEntity(entity);
+            try{
+                return insertEntity(entity);
+            }catch(SQLIntegrityConstraintViolationException ex){ // may happen due to race condition... if so then catch and try insert
+                Logger.getLogger(BaseDAO.class.getName()).log(Level.INFO, null, ex);
+                return updateEntity(entity);
+            }
+            
         }
     }
 
