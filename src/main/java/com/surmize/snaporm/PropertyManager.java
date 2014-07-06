@@ -1,6 +1,7 @@
 package com.surmize.snaporm;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,8 +16,19 @@ public class PropertyManager {
     private synchronized static void initialize() {
         try {
             properties = new Properties();
-            //TODO get property file based on environment variable
-            properties.load(PropertyManager.class.getResourceAsStream("/snaporm.properties"));
+            String environment = System.getenv("SNAPORM_ENV");
+            if("production".equalsIgnoreCase(environment)){
+                properties.load(PropertyManager.class.getResourceAsStream("/prod-snaporm.properties"));
+            }
+            else if("staging".equalsIgnoreCase(environment)){
+                properties.load(PropertyManager.class.getResourceAsStream("/stage-snaporm.properties"));
+            }
+            else if("test".equalsIgnoreCase(environment)){
+                properties.load(PropertyManager.class.getResourceAsStream("/test-snaporm.properties"));
+            }
+            else{
+                properties.load(PropertyManager.class.getResourceAsStream("/dev-snaporm.properties"));
+            }
         } catch (IOException ex) {
             Logger.getLogger(PropertyManager.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -45,5 +57,14 @@ public class PropertyManager {
     
     public static void reload() {
     	initialize();
+    }
+    
+    public static void main(String args[]){
+        Map<String, String> env = System.getenv();
+        for (String envName : env.keySet()) {
+            System.out.format("%s=%s%n",
+                              envName,
+                              env.get(envName));
+        }
     }
 }
