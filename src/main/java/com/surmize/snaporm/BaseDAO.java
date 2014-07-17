@@ -1,5 +1,6 @@
 package com.surmize.snaporm;
 
+import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -87,7 +88,8 @@ public abstract class BaseDAO<T> {
         } else {
             try{
                 return insertEntity(entity);
-            }catch(SQLIntegrityConstraintViolationException ex){ // may happen due to race condition... if so then catch and try insert
+            }
+            catch(MySQLIntegrityConstraintViolationException | SQLIntegrityConstraintViolationException ex){
                 Logger.getLogger(BaseDAO.class.getName()).log(Level.INFO, null, ex);
                 return updateEntity(entity);
             }
