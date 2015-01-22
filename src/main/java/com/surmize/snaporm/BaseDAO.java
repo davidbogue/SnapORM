@@ -1,6 +1,8 @@
 package com.surmize.snaporm;
 
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
+
+import java.lang.reflect.ParameterizedType;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,7 +14,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class BaseDAO<T> {
+public class BaseDAO<T> {
 
     protected final DataSourceManager dsMan;
     protected final ResultSetMapper mapper;
@@ -171,7 +173,6 @@ public abstract class BaseDAO<T> {
         if (keyValueMap == null) {
             return false;
         } else {
-            T result = null;
             Connection con = null;
             PreparedStatement stmt = null;
             ResultSet rs = null;
@@ -191,5 +192,13 @@ public abstract class BaseDAO<T> {
         }
     }
 
-    public abstract T instantiateEntity();
+    public  T instantiateEntity() throws SQLException{
+        try {
+            return (T)((Class)((ParameterizedType)this.getClass().getGenericSuperclass()).getActualTypeArguments()[0]).newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+            throw new SQLException("Invalid object type");
+        }
+
+    }
 }
